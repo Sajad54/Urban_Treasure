@@ -14,15 +14,15 @@ void main() async{
     )
     : await Firebase.initializeApp();
 
-  // Platform.isAndroid?await Firebase.initializeApp(options: const FirebaseOptions(
-  //   apiKey: 'AIzaSyAZW2tf6pYgMxM5NZDK5YV8gB-Z-afk_mM', 
-  //   appId: '1:173922897650:android:0a0c3223fe2e1423a50a6b', 
-  //   messagingSenderId: '173922897650', 
-  //   projectId: 'urbantreasure-f74d9',
-  //   storageBucket: 'gs://urbantreasure-f74d9.firebasestorage.app'),
-  //   )
-  //   : await Firebase.initializeApp();
-  // runApp(const MainApp());
+  Platform.isAndroid?await Firebase.initializeApp(options: const FirebaseOptions(
+    apiKey: 'AIzaSyAZW2tf6pYgMxM5NZDK5YV8gB-Z-afk_mM', 
+    appId: '1:173922897650:android:0a0c3223fe2e1423a50a6b', 
+    messagingSenderId: '173922897650', 
+    projectId: 'urbantreasure-f74d9',
+    storageBucket: 'gs://urbantreasure-f74d9.firebasestorage.app'),
+    )
+    : await Firebase.initializeApp();
+  runApp(const MainApp());
  }
 
 class MainApp extends StatelessWidget {
