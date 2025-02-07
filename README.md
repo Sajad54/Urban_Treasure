@@ -1,3 +1,3 @@
 # urban_treasure
 
-A new Flutter project.
+Bringing hidden local gems into the spotlight, one check-in at a time 
