@@ -1,8 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:urban_treasure/controllers/auth_controller.dart';
 import 'package:urban_treasure/views/screens/auth/login_screen.dart';
 
-class RegisterScreen2 extends StatelessWidget {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+class BusinessRegisterScreen extends StatefulWidget {
+  const BusinessRegisterScreen({super.key});
+
+  @override
+  State<BusinessRegisterScreen> createState() => _RegisterScreen2State();
+}
+
+class _RegisterScreen2State extends State<BusinessRegisterScreen> {
+  // Getting auth controller
+  final authController = AuthController();
+
+  // Form Key
+  final _formKey = GlobalKey<FormState>();
+
+  // Text Controllers
+  final _emailController = TextEditingController();
+  final _companyNameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  // Register Button Pressed
+  void register() async {
+    final email = _emailController.text;
+    final companyName = _companyNameController.text;
+    final password = _passwordController.text;
+
+    try {
+      await authController.registerBusiness(email, companyName, password);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration Successful")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,9 +51,9 @@ class RegisterScreen2 extends StatelessWidget {
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, 
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 'Business Registration',
                 style: TextStyle(
                   fontSize: 22,
@@ -22,75 +61,69 @@ class RegisterScreen2 extends StatelessWidget {
                   letterSpacing: 4,
                 ),
               ),
-              SizedBox(
-                height: 25,),
+              const SizedBox(height: 25),
               TextFormField(
-                 validator: (value) {
-                  if(value!.isEmpty) {
+                controller: _emailController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
                     return 'Please Enter A Valid Email Address';
-                  } else {
-                    return null;
                   }
+                  return null;
                 },
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Email Address',
                   hintText: 'Example@gmail.com',
                   prefixIcon: Icon(
                     Icons.email,
-                    color: const Color.fromARGB(255, 221, 178, 49),
-                    ),
-                    border: OutlineInputBorder(),
+                    color: Color.fromARGB(255, 221, 178, 49),
+                  ),
+                  border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               TextFormField(
-                 validator: (value) {
-                  if(value!.isEmpty) {
+                controller: _companyNameController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
                     return 'Please Enter A Valid Company Name';
-                  } else {
-                    return null;
                   }
+                  return null;
                 },
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Company Name',
                   hintText: 'Enter Company Name',
                   prefixIcon: Icon(
                     Icons.business,
-                    color: const Color.fromARGB(255, 221, 178, 49),
-                    ),
-                  border: OutlineInputBorder()
+                    color: Color.fromARGB(255, 221, 178, 49),
+                  ),
+                  border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               TextFormField(
-                 validator: (value) {
-                  if(value!.isEmpty) {
+                controller: _passwordController,
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
                     return 'Please Enter A Valid Password';
-                  } else {
-                    return null;
                   }
+                  return null;
                 },
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Password',
                   hintText: 'Enter Password',
                   prefixIcon: Icon(
                     Icons.lock,
-                    color: const Color.fromARGB(255, 221, 178, 49),
-                    ),
-                  border: OutlineInputBorder()
+                    color: Color.fromARGB(255, 221, 178, 49),
+                  ),
+                  border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               InkWell(
-                onTap: (){
-                  if(_formKey.currentState!.validate()) {
-                    print('Valid');
+                onTap: () {
+                  if (_formKey.currentState!.validate()) {
+                    register();
                   } else {
                     print('Not Valid');
                   }
@@ -101,28 +134,31 @@ class RegisterScreen2 extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 221, 178, 49),
                     borderRadius: BorderRadius.circular(25),
-                    
                   ),
-                  child: Center(
-                      child: Text(
-                    'Register',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      letterSpacing: 4,
-                      fontWeight: FontWeight.bold,
+                  child: const Center(
+                    child: Text(
+                      'Register',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        letterSpacing: 4,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )),
+                  ),
                 ),
               ),
-              SizedBox(
-                height: 6,
-              ),
-              TextButton(onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return LoginPage();
-                }));
-              }, child: Text('Already Have An Account?',),
+              const SizedBox(height: 6),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                child: const Text('Already Have An Account?'),
               ),
             ],
           ),

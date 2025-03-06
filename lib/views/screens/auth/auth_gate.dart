@@ -10,7 +10,7 @@ authenticated -> Profile Page
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:urban_treasure/views/screens/auth/login_screen.dart';
-import 'package:urban_treasure/views/screens/auth/register_screen.dart';
+import 'package:urban_treasure/views/screens/home_screen.dart';
 
 class AuthGate extends StatelessWidget{
   const AuthGate({super.key});
@@ -31,10 +31,10 @@ class AuthGate extends StatelessWidget{
         final session = snapshot.hasData ? snapshot.data!.session : null;
 
         if (session != null){
-          return RegisterScreen();
+          return const HomeScreen() ;
         } 
         else {
-          return LoginPage();
+          return const LoginScreen();
         }
         }
       );

@@ -1,7 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:urban_treasure/views/screens/auth/login_screen.dart';
+import 'package:urban_treasure/views/screens/auth/auth_gate.dart';
 
 void main() async{
   await Supabase.initialize(
@@ -18,7 +17,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       // debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      home: AuthGate(),
     );
   }
 }

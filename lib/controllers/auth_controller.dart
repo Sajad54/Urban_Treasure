@@ -11,14 +11,6 @@ class AuthController {
     );
   }
 
-  // Sign up with email and password
-  Future<AuthResponse> signUpWithEmailPassword(String email, String password) async {
-    return await _supabase.auth.signUp(
-      email: email,
-      password: password,
-    );
-  }
-
   // Create new user and save to database
   Future<AuthResponse?> createNewUser(String email, String password, String fullName) async {
     try {
@@ -38,6 +30,30 @@ class AuthController {
       }
     } catch (e) {
       print('Error creating new user: $e');
+    }
+
+    return null;
+  }
+
+  // Register a new business
+  Future<AuthResponse?> registerBusiness(String email, String companyName, String password) async {
+    try {
+      // Sign up the user
+      final response = await _supabase.auth.signUp(email: email, password: password);
+
+      if (response.user != null) {
+        // Insert business details into the businesses table
+        await _supabase.from('businesses').insert({
+          'id': response.user!.id, // Use the generated Supabase user ID
+          'email': email,
+          'company_name': companyName,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+
+        return response;
+      }
+    } catch (e) {
+      print('Error registering business: $e');
     }
 
     return null;
