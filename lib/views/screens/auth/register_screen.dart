@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:urban_treasure/controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:urban_treasure/views/screens/auth/login_screen.dart';
 import 'package:urban_treasure/views/screens/home_screen.dart';
 
@@ -11,60 +11,107 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Getting auth controller
-  final authController = AuthController();
-
-  // Form Key
   final _formKey = GlobalKey<FormState>();
-
-  // Text Controllers
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _confirmEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
-  // Register Button Pressed
-  void register() async {
-    final fullName = _fullNameController.text;
-    final email = _emailController.text;
-    final confirmEmail = _confirmEmailController.text;
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _confirmEmailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
-    if (email != confirmEmail) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Emails do not match!")),
-      );
-      return;
-    }
+  // Register function
+  Future<void> _register() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
 
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match!")),
-      );
-      return;
-    }
+      final fullName = _fullNameController.text.trim();
+      final email = _emailController.text.trim();
+      final confirmEmail = _confirmEmailController.text.trim();
+      final password = _passwordController.text.trim();
+      final confirmPassword = _confirmPasswordController.text.trim();
 
-    try {
-      await authController.createNewUser(email, fullName, password);
-
-      if (mounted) {
+      if (email != confirmEmail) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration Successful")),
-
+          const SnackBar(content: Text("Emails do not match!")),
         );
-
-        Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
       }
-    } catch (e) {
-      if (mounted) {
+
+      if (password != confirmPassword) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
+          const SnackBar(content: Text("Passwords do not match!")),
         );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      try {
+        // Call to Supabase to sign up the user
+        final response = await Supabase.instance.client.auth.signUp(
+          email: email,
+          password: password,
+        );
+
+        // Check if the user is successfully created
+        final userId = response.user?.id;
+        if (userId != null) {
+          // Insert user details into the 'users' table
+          await Supabase.instance.client
+              .from(
+                  'users') // Change 'users' to your actual table name if necessary
+              .insert([
+            {
+              'id': userId,
+              'full_name': fullName,
+              'email': email,
+            }
+          ]).select(); // Insert and discard the response
+
+          // Success
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Registration Successful")),
+          );
+
+          // Navigate to the home screen after successful registration
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          // Handle case where user ID is null
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error: Unable to get user ID")),
+          );
+        }
+      }catch (e) {
+  // Print the actual error message to the console for debugging
+  print('Error during registration: $e');
+  
+  // Show the error message in the snackbar
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Unexpected error occurred: $e')),
+  );
+} finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -186,13 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 20),
               InkWell(
-                onTap: () {
-                  if (_formKey.currentState!.validate()) {
-                    register();
-                  } else {
-                    print('Registration Failed');
-                  }
-                },
+                onTap: _isLoading ? null : _register,
                 child: Container(
                   height: 50,
                   width: MediaQuery.of(context).size.width - 75,
@@ -200,16 +241,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: const Color.fromARGB(255, 221, 178, 49),
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Register',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        letterSpacing: 4,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  child: Center(
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Register',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              letterSpacing: 4,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -217,7 +260,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
                   );
                 },
                 child: const Text('Already Have An Account?'),

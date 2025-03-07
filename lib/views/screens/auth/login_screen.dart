@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:urban_treasure/controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:urban_treasure/main.dart';
 import 'package:urban_treasure/views/screens/auth/register_screen.dart';
 import 'package:urban_treasure/views/screens/auth/business_register_screen.dart';
+import 'package:urban_treasure/views/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,28 +14,67 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Getting auth controller
-  final authController = AuthController();
-
-  // Form Key
   final _formKey = GlobalKey<FormState>();
-
-  // Text Controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  // Login Button Pressed
-  void login() async {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-
-    try {
-      await authController.signInWithEmailPassword(email, password);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
+  @override
+  void initState() {
+    super.initState();
+    supabase.auth.onAuthStateChange.listen((event) {
+      final session = event.session;
+      if (session != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // Simplified sign-in with try-catch
+  Future<void> _signIn() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        final email = _emailController.text.trim();
+        final password = _passwordController.text.trim();
+
+        // Attempt to sign in with email and password
+        await supabase.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+
+        // Direct navigation after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } on AuthApiException catch (e) {
+        // Displaying error in snack bar if authentication fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An Error Occurred: ${e.message}')),
+        );
+      } catch (e) {
+        // Catching unexpected errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unexpected error occurred')),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -95,39 +137,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              InkWell(
-                onTap: () {
-                  if (_formKey.currentState!.validate()) {
-                    login();
-                  } else {
-                    print('Unable To Login');
-                  }
-                },
-                child: Container(
-                  height: 50,
-                  width: MediaQuery.of(context).size.width - 75,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 221, 178, 49),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        letterSpacing: 4,
-                        fontWeight: FontWeight.bold,
+              ElevatedButton(
+                onPressed: _isLoading ? null : _signIn,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          letterSpacing: 4,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(MediaQuery.of(context).size.width - 75, 50),
+                  backgroundColor: const Color.fromARGB(255, 221, 178, 49),
                 ),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => RegisterScreen()),
+                    MaterialPageRoute(builder: (context) => BusinessRegisterScreen()),
                   );
                 },
                 child: const Text('Create Account'),
@@ -136,7 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => BusinessRegisterScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => HomeScreen()),
                   );
                 },
                 child: const Text('Business Registration'),
