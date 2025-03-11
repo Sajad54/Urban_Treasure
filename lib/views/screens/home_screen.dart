@@ -14,14 +14,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
 
   final authController = AuthController();
-
-
   int _currentIndex = 0;
-
 
   void _onItemTapped(int index) {
     if (_currentIndex == index) {
-      return;
+      return; // Don't do anything if the same item is tapped
     }
 
     setState(() {
@@ -29,17 +26,17 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     if (index == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      // No need to push the same HomeScreen, just update the index
+      setState(() {
+        _currentIndex = 0;
+      });
     } else if (index == 1) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MapScreen()),
       );
     } else if (index == 2) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const RewardsScreen()),
       );
@@ -59,8 +56,10 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.account_circle),
               onPressed: () {
-                 Navigator.push(context, 
-                 MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
               },
             ),
           ],
@@ -78,8 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: SafeArea(  // Wrap the body with SafeArea
-        child: SingleChildScrollView(  // Keep the SingleChildScrollView for scrolling content
+      body: SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -171,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard),  // Example icon for rewards
+            icon: Icon(Icons.card_giftcard),
             label: '',
           ),
         ],

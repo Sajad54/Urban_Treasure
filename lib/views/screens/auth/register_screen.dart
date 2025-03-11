@@ -14,104 +14,91 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _confirmEmailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
-    _confirmEmailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   // Register function
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       final fullName = _fullNameController.text.trim();
       final email = _emailController.text.trim();
-      final confirmEmail = _confirmEmailController.text.trim();
       final password = _passwordController.text.trim();
-      final confirmPassword = _confirmPasswordController.text.trim();
 
-      if (email != confirmEmail) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Emails do not match!")),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
+      // Logging the inputs to confirm they are captured correctly
+      print("Full Name: $fullName");
+      print("Email: $email");
+      print("Password: $password");
 
-      if (password != confirmPassword) {
+      // Check if fullName is null or empty
+      if (fullName.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Passwords do not match!")),
+          const SnackBar(content: Text("Full Name cannot be empty")),
         );
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         return;
       }
 
       try {
-        // Call to Supabase to sign up the user
+        // Register user in Supabase Auth
         final response = await Supabase.instance.client.auth.signUp(
           email: email,
           password: password,
         );
 
-        // Check if the user is successfully created
-        final userId = response.user?.id;
-        if (userId != null) {
-          // Insert user details into the 'users' table
-          await Supabase.instance.client
-              .from(
-                  'users') // Change 'users' to your actual table name if necessary
-              .insert([
-            {
-              'id': userId,
-              'full_name': fullName,
-              'email': email,
-            }
-          ]).select(); // Insert and discard the response
+        final user = response.user;
+        if (user != null) {
+          // Log user data
+          print("User Registered: ${user.id}");
 
-          // Success
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Registration Successful")),
-          );
+          // Insert user details into 'profiles' table only after user is registered
+          final insertResponse = await Supabase.instance.client.from('profiles').insert({
+            'id': user.id,
+            'full_name': fullName,
+            'email': email,
+          }).select().single();
 
-          // Navigate to the home screen after successful registration
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+          // Log the response for debugging
+          print("Insert Response: $insertResponse");
+
+          // If insertResponse doesn't return an error, proceed to home screen
+          if (insertResponse != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Registration Successful")),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          } else {
+            // Handle database insert error
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Failed to insert user details")),
+            );
+          }
         } else {
-          // Handle case where user ID is null
+          // Registration failed
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Error: Unable to get user ID")),
+            const SnackBar(content: Text("Registration failed. Please try again.")),
           );
         }
-      }catch (e) {
-  // Print the actual error message to the console for debugging
-  print('Error during registration: $e');
-  
-  // Show the error message in the snackbar
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Unexpected error occurred: $e')),
-  );
-} finally {
-        setState(() {
-          _isLoading = false;
-        });
+      } catch (e) {
+        // Handle errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      } finally {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -174,25 +161,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 20),
               TextFormField(
-                controller: _confirmEmailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Confirm Your Email Address';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Email Address',
-                  hintText: 'Re-enter Email Address',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
                 controller: _passwordController,
                 obscureText: true,
                 validator: (value) {
@@ -207,26 +175,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(
                     Icons.lock,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Confirm Your Password';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  hintText: 'Re-enter Password',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.lock_outline,
                     color: Color.fromARGB(255, 221, 178, 49),
                   ),
                 ),
@@ -258,10 +206,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
                   );
                 },
                 child: const Text('Already Have An Account?'),
@@ -273,3 +220,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
