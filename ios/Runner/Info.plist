@@ -46,15 +46,27 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>CFBundleURLTypes</key>
-  <array>
-    <dict>
-      <key>CFBundleTypeRole</key>
-      <string>Editor</string>
-      <key>CFBundleURLSchemes</key>
-      <array>
-        <string>io.supabase.flutterquickstart</string>
-      </array>
-    </dict>
-  </array>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.flutterquickstart</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ✅ Google Maps API Key -->
+	<key>GMSApiKey</key>
+	<string>AIzaSyDiuj0x7Ux4hscl2ctAxf6ZPnpIwugZtew</string>
+
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to display nearby places</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to display nearby places even when the app is in the background</string>
 </dict>
 </plist>

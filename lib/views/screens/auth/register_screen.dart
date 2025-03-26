@@ -28,23 +28,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Register function
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+      });
 
       final fullName = _fullNameController.text.trim();
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      // Logging the inputs to confirm they are captured correctly
-      print("Full Name: $fullName");
-      print("Email: $email");
-      print("Password: $password");
-
-      // Check if fullName is null or empty
       if (fullName.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Full Name cannot be empty")),
         );
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
 
@@ -57,48 +55,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         final user = response.user;
         if (user != null) {
-          // Log user data
-          print("User Registered: ${user.id}");
-
-          // Insert user details into 'profiles' table only after user is registered
+          // Insert user details into 'profiles' table
           final insertResponse = await Supabase.instance.client.from('profiles').insert({
             'id': user.id,
             'full_name': fullName,
             'email': email,
           }).select().single();
 
-          // Log the response for debugging
-          print("Insert Response: $insertResponse");
-
-          // If insertResponse doesn't return an error, proceed to home screen
           if (insertResponse != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Registration Successful")),
             );
 
+            // Set loading to false BEFORE navigating
+            setState(() {
+              _isLoading = false;
+            });
+
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
+
+            return; // Ensure the function exits here
           } else {
-            // Handle database insert error
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Failed to insert user details")),
             );
           }
         } else {
-          // Registration failed
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Registration failed. Please try again.")),
           );
         }
       } catch (e) {
-        // Handle errors
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e")),
         );
       } finally {
-        setState(() => _isLoading = false);
+        // Ensure setState() isn't called after dispose
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -220,4 +220,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
