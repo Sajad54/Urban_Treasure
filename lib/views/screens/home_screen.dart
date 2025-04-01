@@ -12,35 +12,35 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final authController = AuthController();
   int _currentIndex = 0;
 
   void _onItemTapped(int index) {
-    if (_currentIndex == index) {
-      return; // Don't do anything if the same item is tapped
-    }
+    if (_currentIndex == index) return;
 
     setState(() {
       _currentIndex = index;
     });
 
-    if (index == 0) {
-      // No need to push the same HomeScreen, just update the index
-      setState(() {
-        _currentIndex = 0;
-      });
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MapScreen()),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const RewardsScreen()),
-      );
+    Widget screen;
+    switch (index) {
+      case 0:
+        screen = const HomeScreen();
+        break;
+      case 1:
+        screen = const MapScreen();
+        break;
+      case 2:
+        screen = const RewardsScreen();
+        break;
+      default:
+        return;
     }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => screen),
+    );
   }
 
   @override
@@ -95,16 +95,16 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _categoryBox(Icons.fastfood, "Food"),
-                  _categoryBox(Icons.storefront, "Retail"),
+                  _categoryBox(Icons.fastfood, "Food", () {}),
+                  _categoryBox(Icons.storefront, "Retail", () {}),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _categoryBox(Icons.favorite, "Favorites"),
-                  _categoryBox(Icons.location_pin, "Near Me"),
+                  _categoryBox(Icons.favorite, "Favorites", () {}),
+                  _categoryBox(Icons.location_pin, "Near Me", () => _onItemTapped(1)),
                 ],
               ),
               const SizedBox(height: 30),
@@ -163,46 +163,50 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: '',
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
-            label: '',
+            label: 'Map',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.card_giftcard),
-            label: '',
+            label: 'Coupons',
           ),
         ],
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white60,
+        currentIndex: _currentIndex,
         onTap: _onItemTapped,
       ),
     );
   }
 
-  Widget _categoryBox(IconData icon, String label) {
-    return Container(
-      width: MediaQuery.of(context).size.width / 2 - 30,
-      height: 150,
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 221, 178, 49),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 40, color: Colors.white),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+  Widget _categoryBox(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: MediaQuery.of(context).size.width / 2 - 30,
+        height: 150,
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 221, 178, 49),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: Colors.white),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

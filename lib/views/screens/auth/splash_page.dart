@@ -17,42 +17,46 @@ class _SplashPageState extends State<SplashPage> {
     _redirect();
   }
 
-  // Redirect users based on authentication state
   Future<void> _redirect() async {
-    await Future.delayed(const Duration(seconds: 2)); // Splash delay
-    final user = Supabase.instance.client.auth.currentUser;
+  await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return; // Prevent navigation issues
+  final supabase = Supabase.instance.client;
+  final user = supabase.auth.currentUser;
 
-    if (user != null) {
-      // Fetch user profile from 'profiles' table
-      final profile = await Supabase.instance.client
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .single();
+  if (!mounted) return;
 
-      if (profile != null) {
-        print("User Logged In: ${profile['full_name']}");
-      }
-
-      // Navigate to HomeScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      // Navigate to LoginScreen if no user session
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
+  if (user == null) {
+    // No logged-in user
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+    return;
   }
+
+  try {
+    // If user exists, refresh session
+    await supabase.auth.refreshSession();
+
+    // Then go to Home
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  } catch (e) {
+    debugPrint("Splash error: $e");
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(child: CircularProgressIndicator()),
     );
   }

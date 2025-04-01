@@ -1,38 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:urban_treasure/controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:urban_treasure/views/screens/auth/login_screen.dart';
+import 'package:urban_treasure/views/screens/home_screen.dart';
 
 class BusinessRegisterScreen extends StatefulWidget {
   const BusinessRegisterScreen({super.key});
 
   @override
-  State<BusinessRegisterScreen> createState() => _RegisterScreen2State();
+  State<BusinessRegisterScreen> createState() => _BusinessRegisterScreenState();
 }
 
-class _RegisterScreen2State extends State<BusinessRegisterScreen> {
-  // Getting auth controller
-  final authController = AuthController();
-
-  // Form Key
+class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  // Text Controllers
   final _emailController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  // Register Button Pressed
-  void register() async {
-    final email = _emailController.text;
-    final companyName = _companyNameController.text;
-    final password = _passwordController.text;
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _companyNameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _registerBusiness() async {
+    setState(() => _isLoading = true);
+
+    final email = _emailController.text.trim();
+    final companyName = _companyNameController.text.trim();
+    final password = _passwordController.text.trim();
 
     try {
-      await authController.registerBusiness(email, companyName, password);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration Successful")),
-        );
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      final currentUser = Supabase.instance.client.auth.currentUser;
+
+      if (currentUser != null) {
+        final insertResponse = await Supabase.instance.client
+            .from('profiles')
+            .insert({
+              'id': currentUser.id,
+              'username': companyName,
+              'email': email,
+              'role': 'vendor',
+            })
+            .select()
+            .single();
+
+        if (insertResponse != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Business Registered Successfully")),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Sign up failed — no user returned")),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -40,6 +74,8 @@ class _RegisterScreen2State extends State<BusinessRegisterScreen> {
           SnackBar(content: Text("Error: $e")),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -63,32 +99,9 @@ class _RegisterScreen2State extends State<BusinessRegisterScreen> {
               ),
               const SizedBox(height: 25),
               TextFormField(
-                controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Email Address';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  hintText: 'Example@gmail.com',
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
                 controller: _companyNameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Company Name';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a valid company name' : null,
                 decoration: const InputDecoration(
                   labelText: 'Company Name',
                   hintText: 'Enter Company Name',
@@ -101,14 +114,25 @@ class _RegisterScreen2State extends State<BusinessRegisterScreen> {
               ),
               const SizedBox(height: 20),
               TextFormField(
+                controller: _emailController,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a valid email address' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Email Address',
+                  hintText: 'Example@gmail.com',
+                  prefixIcon: Icon(
+                    Icons.email,
+                    color: Color.fromARGB(255, 221, 178, 49),
+                  ),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Password';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a password' : null,
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   hintText: 'Enter Password',
@@ -121,13 +145,15 @@ class _RegisterScreen2State extends State<BusinessRegisterScreen> {
               ),
               const SizedBox(height: 20),
               InkWell(
-                onTap: () {
-                  if (_formKey.currentState!.validate()) {
-                    register();
-                  } else {
-                    print('Not Valid');
-                  }
-                },
+                onTap: _isLoading
+                    ? null
+                    : () {
+                        if (_formKey.currentState!.validate()) {
+                          _registerBusiness();
+                        } else {
+                          debugPrint('Form not valid');
+                        }
+                      },
                 child: Container(
                   height: 50,
                   width: MediaQuery.of(context).size.width - 75,
@@ -135,27 +161,27 @@ class _RegisterScreen2State extends State<BusinessRegisterScreen> {
                     color: const Color.fromARGB(255, 221, 178, 49),
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Register',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        letterSpacing: 4,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  child: Center(
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Register',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              letterSpacing: 4,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ),
               const SizedBox(height: 6),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
                   );
                 },
                 child: const Text('Already Have An Account?'),

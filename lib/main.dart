@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:urban_treasure/views/screens/auth/splash_page.dart';
-
+import 'package:urban_treasure/models/themes_notifier.dart';
 void main() async {
-  // Initialize Supabase before the app starts
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Supabase.initialize(
     url: "https://vtsdaeaxlcwwbgdpvjrd.supabase.co",
     anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0c2RhZWF4bGN3d2JnZHB2anJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExOTY0OTMsImV4cCI6MjA1Njc3MjQ5M30.ID5oY0A9mp-bXB7pOWwQdloX78C9h90C8l9bKXwjGeA",
   );
-  runApp(MainApp());
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: const MainApp(),
+    ),
+  );
 }
 
 // Global variable to access the Supabase client
@@ -19,9 +27,13 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashPage(), // SplashPage should handle loading and redirect
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: themeNotifier.themeMode,
+      home: const SplashPage(), // SplashPage handles loading + redirects
     );
   }
 }

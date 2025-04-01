@@ -12,93 +12,81 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  // Register function
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      final fullName = _fullNameController.text.trim();
+      final username = _usernameController.text.trim();
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      if (fullName.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Full Name cannot be empty")),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
       try {
-        // Register user in Supabase Auth
         final response = await Supabase.instance.client.auth.signUp(
           email: email,
           password: password,
         );
 
-        final user = response.user;
-        if (user != null) {
-          // Insert user details into 'profiles' table
-          final insertResponse = await Supabase.instance.client.from('profiles').insert({
-            'id': user.id,
-            'full_name': fullName,
-            'email': email,
-          }).select().single();
+        final currentUser = Supabase.instance.client.auth.currentUser;
+
+        if (currentUser != null) {
+          final insertResponse = await Supabase.instance.client
+              .from('profiles')
+              .insert({
+                'id': currentUser.id,
+                'username': username,
+                'email': email,
+                'role': 'user',
+              })
+              .select()
+              .single();
 
           if (insertResponse != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Registration Successful")),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Registration Successful")),
+              );
 
-            // Set loading to false BEFORE navigating
-            setState(() {
-              _isLoading = false;
-            });
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-
-            return; // Ensure the function exits here
+              // Navigate before doing any more setState
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+            }
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Failed to insert user details")),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Failed to insert user profile")),
+              );
+            }
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Registration failed. Please try again.")),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Sign up failed — no user returned")),
+            );
+          }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
-        );
-      } finally {
-        // Ensure setState() isn't called after dispose
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e")),
+          );
         }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -123,16 +111,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 25),
               TextFormField(
-                controller: _fullNameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Name';
-                  }
-                  return null;
-                },
+                controller: _usernameController,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a username' : null,
                 decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  hintText: 'Enter Full Name',
+                  labelText: 'Username',
+                  hintText: 'Enter Username',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(
                     Icons.person,
@@ -143,15 +127,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Email Address';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a valid email' : null,
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
-                  hintText: 'Example@gmail.com',
+                  hintText: 'example@email.com',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(
                     Icons.email,
@@ -163,12 +143,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Password';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a password' : null,
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   hintText: 'Enter Password',

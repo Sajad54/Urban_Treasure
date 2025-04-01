@@ -5,6 +5,7 @@ import 'package:urban_treasure/main.dart';
 import 'package:urban_treasure/views/screens/auth/register_screen.dart';
 import 'package:urban_treasure/views/screens/auth/business_register_screen.dart';
 import 'package:urban_treasure/views/screens/home_screen.dart';
+import 'package:urban_treasure/views/screens/auth/OtpVerificationScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,61 +21,85 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    supabase.auth.onAuthStateChange.listen((event) {
-      final session = event.session;
-      if (session != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    });
-  }
-
-  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  // Simplified sign-in with try-catch
   Future<void> _signIn() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      if (!mounted) return;
+      setState(() => _isLoading = true);
+
       try {
         final email = _emailController.text.trim();
         final password = _passwordController.text.trim();
 
-        // Attempt to sign in with email and password
-        await supabase.auth.signInWithPassword(
+        final result = await supabase.auth.signInWithPassword(
           email: email,
           password: password,
         );
 
-        // Direct navigation after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        // Case: Login successful without MFA
+        if (result.session != null) {
+          final userId = result.user?.id;
+          final profile = await supabase
+              .from('profiles')
+              .select()
+              .eq('id', userId!)
+              .maybeSingle();
+
+          if (profile == null) {
+            await supabase.auth.signOut();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("No profile found. Please register again.")),
+            );
+            return;
+          }
+
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+
+        // Case: MFA challenge required
+        } else if (result.session == null && result.user != null) {
+          final factors = await supabase.auth.mfa.listFactors();
+
+          final emailFactor = factors.all.firstWhere(
+            (f) => f.factorType == 'email_otp',
+            orElse: () => throw Exception("No email MFA factor found."),
+          );
+
+          final factorId = emailFactor.id;
+
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OtpVerificationScreen(factorId: factorId),
+            ),
+          );
+        } else {
+          throw Exception('Unexpected login state.');
+        }
       } on AuthApiException catch (e) {
-        // Displaying error in snack bar if authentication fails
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An Error Occurred: ${e.message}')),
         );
       } catch (e) {
-        // Catching unexpected errors
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unexpected error occurred')),
+          SnackBar(content: Text('Unexpected error occurred: $e')),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -159,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => RegisterScreen()),
+                    MaterialPageRoute(builder: (_) => RegisterScreen()),
                   );
                 },
                 child: const Text('Create Account'),
@@ -169,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => HomeScreen()),
+                        builder: (_) => BusinessRegisterScreen()),
                   );
                 },
                 child: const Text('Business Registration'),
