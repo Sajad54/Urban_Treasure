@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:urban_treasure/views/screens/home_screen.dart';
 import 'package:urban_treasure/views/screens/rewards_screen.dart';
 
@@ -54,36 +52,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Future<void> _getDistanceTo(LatLng destination) async {
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      final origin = '${position.latitude},${position.longitude}';
-      final dest = '${destination.latitude},${destination.longitude}';
-
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/distancematrix/json?origins=$origin&destinations=$dest&mode=driving&units=imperial&key=$kGoogleApiKey');
-
-      final response = await http.get(url);
-      final data = jsonDecode(response.body);
-
-      if (data['status'] == 'OK' &&
-          data['rows'][0]['elements'][0]['status'] == 'OK') {
-        final element = data['rows'][0]['elements'][0];
-        setState(() {
-          _distance = element['distance']['text'];
-          _duration = element['duration']['text'];
-        });
-      } else {
-        debugPrint("Failed to fetch distance: ${data['status']}");
-      }
-    } catch (e) {
-      debugPrint("Error fetching distance: $e");
-    }
-  }
-
   void _onItemTapped(int index) {
     if (_currentIndex == index) return;
 
@@ -109,6 +77,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Map Screen"),
         backgroundColor: const Color.fromARGB(255, 221, 178, 49),
       ),

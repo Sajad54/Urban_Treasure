@@ -5,7 +5,6 @@ import 'package:urban_treasure/main.dart';
 import 'package:urban_treasure/views/screens/auth/register_screen.dart';
 import 'package:urban_treasure/views/screens/auth/business_register_screen.dart';
 import 'package:urban_treasure/views/screens/home_screen.dart';
-import 'package:urban_treasure/views/screens/auth/OtpVerificationScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,12 +17,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _otpController = TextEditingController();
+
   bool _isLoading = false;
+  String? _mfaFactorId;
+  String? _challengeId;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
@@ -41,13 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
           password: password,
         );
 
-        // Case: Login successful without MFA
+        final user = result.user;
+
         if (result.session != null) {
-          final userId = result.user?.id;
           final profile = await supabase
               .from('profiles')
               .select()
-              .eq('id', userId!)
+              .eq('id', user!.id)
               .maybeSingle();
 
           if (profile == null) {
@@ -59,49 +63,104 @@ class _LoginScreenState extends State<LoginScreen> {
             return;
           }
 
-          if (!mounted) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
+          final isMfaEnabled = profile['mfa_enabled'] ?? false;
 
-        // Case: MFA challenge required
-        } else if (result.session == null && result.user != null) {
-          final factors = await supabase.auth.mfa.listFactors();
+          if (isMfaEnabled) {
+            final factors = await supabase.auth.mfa.listFactors();
+            final totpFactor = factors.totp.firstOrNull;
 
-          final emailFactor = factors.all.firstWhere(
-            (f) => f.factorType == 'email_otp',
-            orElse: () => throw Exception("No email MFA factor found."),
-          );
+            if (totpFactor == null) throw Exception("TOTP factor not found.");
 
-          final factorId = emailFactor.id;
+            final challenge = await supabase.auth.mfa.challenge(factorId: totpFactor.id);
 
-          if (!mounted) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OtpVerificationScreen(factorId: factorId),
-            ),
-          );
+            _mfaFactorId = totpFactor.id;
+            _challengeId = challenge.id;
+
+            if (!mounted) return;
+
+            await _showOtpDialog(); // Ask for the code inline
+          } else {
+            if (!mounted) return;
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+          }
+        } else if (user != null) {
+          throw Exception("Unexpected login state. MFA likely required but session is null.");
         } else {
-          throw Exception('Unexpected login state.');
+          throw Exception('Login failed.');
         }
       } on AuthApiException catch (e) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An Error Occurred: ${e.message}')),
+          SnackBar(content: Text('Auth error: ${e.message}')),
         );
       } catch (e) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unexpected error occurred: $e')),
+          SnackBar(content: Text('Unexpected error: $e')),
         );
       } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+        if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _showOtpDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Enter 6-digit code"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Enter the code from your authenticator app"),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: "6-digit code",
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                try {
+                  final code = _otpController.text.trim();
+
+                  if (_mfaFactorId == null || _challengeId == null) {
+                    throw Exception("Missing MFA factor or challenge ID");
+                  }
+
+                  await supabase.auth.mfa.verify(
+                    factorId: _mfaFactorId!,
+                    challengeId: _challengeId!,
+                    code: code,
+                  );
+
+                  final refreshed = await supabase.auth.refreshSession();
+                  if (refreshed.session == null) {
+                    throw Exception("Failed to refresh session after verification");
+                  }
+
+                  if (!mounted) return;
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Invalid code: $e")),
+                  );
+                }
+              },
+              child: const Text("Verify"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -114,51 +173,26 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Account Login',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 4,
-                ),
-              ),
+              const Text('Account Login', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 4)),
               const SizedBox(height: 25),
               TextFormField(
                 controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Email Address';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value.isEmpty ? 'Please enter a valid email' : null,
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
-                  hintText: 'Example@gmail.com',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.email, color: Color.fromARGB(255, 221, 178, 49)),
                 ),
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please Enter A Valid Password';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value.isEmpty ? 'Please enter a valid password' : null,
                 decoration: const InputDecoration(
                   labelText: 'Password',
-                  hintText: 'Enter Password',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.lock,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 221, 178, 49)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -166,15 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _isLoading ? null : _signIn,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          letterSpacing: 4,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    : const Text('Login', style: TextStyle(color: Colors.white, fontSize: 22, letterSpacing: 4, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(MediaQuery.of(context).size.width - 75, 50),
                   backgroundColor: const Color.fromARGB(255, 221, 178, 49),
@@ -182,20 +208,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => RegisterScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
                 },
                 child: const Text('Create Account'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => BusinessRegisterScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessRegisterScreen()));
                 },
                 child: const Text('Business Registration'),
               ),
