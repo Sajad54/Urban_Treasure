@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:urban_treasure/controllers/auth_controller.dart';
-import 'package:urban_treasure/views/screens/vendor_list_screen.dart';
+import 'package:urban_treasure/views/screens/vendor_screen.dart';
 import 'package:urban_treasure/views/screens/profile_screen.dart';
 import 'package:urban_treasure/views/screens/rewards_screen.dart';
 
