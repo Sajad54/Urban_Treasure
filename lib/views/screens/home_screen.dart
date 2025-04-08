@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:urban_treasure/controllers/auth_controller.dart';
-import 'package:urban_treasure/views/screens/map_screen.dart';
+import 'package:urban_treasure/views/screens/vendor_list_screen.dart';
 import 'package:urban_treasure/views/screens/profile_screen.dart';
 import 'package:urban_treasure/views/screens/rewards_screen.dart';
 
@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
         screen = const HomeScreen();
         break;
       case 1:
-        screen = const MapScreen();
+        screen = const VendorScreen();
         break;
       case 2:
         screen = const RewardsScreen();

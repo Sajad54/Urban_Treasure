@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:urban_treasure/main.dart';
 import 'package:urban_treasure/views/screens/auth/register_screen.dart';
 import 'package:urban_treasure/views/screens/auth/business_register_screen.dart';
 import 'package:urban_treasure/views/screens/home_screen.dart';
-
+import 'package:urban_treasure/views/screens/business_homescreen.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -50,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (result.session != null) {
           final profile = await supabase
               .from('profiles')
-              .select()
+              .select('mfa_enabled, role')
               .eq('id', user!.id)
               .maybeSingle();
 
@@ -64,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
 
           final isMfaEnabled = profile['mfa_enabled'] ?? false;
+          final role = profile['role'] ?? 'user';
 
           if (isMfaEnabled) {
             final factors = await supabase.auth.mfa.listFactors();
@@ -76,25 +76,24 @@ class _LoginScreenState extends State<LoginScreen> {
             _mfaFactorId = totpFactor.id;
             _challengeId = challenge.id;
 
-            if (!mounted) return;
-
-            await _showOtpDialog(); // Ask for the code inline
+            await _showOtpDialog(role); // show inline OTP dialog
           } else {
             if (!mounted) return;
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => role == 'vendor'
+                    ? const BusinessHomeScreen()
+                    : const HomeScreen(),
+              ),
+            );
           }
-        } else if (user != null) {
-          throw Exception("Unexpected login state. MFA likely required but session is null.");
         } else {
-          throw Exception('Login failed.');
+          throw Exception("Login failed. No session.");
         }
-      } on AuthApiException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Auth error: ${e.message}')),
-        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unexpected error: $e')),
+          SnackBar(content: Text("Login error: $e")),
         );
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -102,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _showOtpDialog() async {
+  Future<void> _showOtpDialog(String role) async {
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -147,8 +146,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
 
                   if (!mounted) return;
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+                  Navigator.of(context).pop(); // close dialog
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => role == 'vendor'
+                          ? const BusinessHomeScreen()
+                          : const HomeScreen(),
+                    ),
+                  );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text("Invalid code: $e")),

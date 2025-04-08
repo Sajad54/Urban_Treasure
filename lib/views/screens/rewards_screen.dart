@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:urban_treasure/controllers/auth_controller.dart';
 import 'package:urban_treasure/views/screens/home_screen.dart';
-import 'package:urban_treasure/views/screens/map_screen.dart';
+import 'package:urban_treasure/views/screens/vendor_list_screen.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
@@ -33,7 +33,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     } else if (index == 1) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const MapScreen()),
+        MaterialPageRoute(builder: (context) => const VendorScreen()),
       );
     } else if (index == 2) {
       Navigator.push(
