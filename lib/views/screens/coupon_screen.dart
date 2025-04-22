@@ -173,6 +173,7 @@ Future<void> _deleteCoupon(String couponId) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Manage Coupons"),
         backgroundColor: const Color.fromARGB(255, 221, 178, 49),
       ),

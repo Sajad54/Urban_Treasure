@@ -126,6 +126,7 @@ class _VendorScreenState extends State<VendorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Explore Vendors"),
         backgroundColor: const Color.fromARGB(255, 221, 178, 49),
       ),
@@ -221,11 +222,11 @@ class _VendorScreenState extends State<VendorScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
-            label: 'Vendors',
+            label: 'Local Treasures',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard),
-            label: 'Rewards',
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
           ),
         ],
       ),

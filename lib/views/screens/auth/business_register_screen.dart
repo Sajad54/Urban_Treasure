@@ -13,15 +13,19 @@ class BusinessRegisterScreen extends StatefulWidget {
 class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _confirmEmailController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _confirmEmailController.dispose();
     _companyNameController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -86,11 +90,13 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
         padding: const EdgeInsets.only(bottom: 60, left: 14, right: 14),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: ListView(
+            shrinkWrap: true,
             children: [
+              const SizedBox(height: 60),
               const Text(
                 'Business Registration',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -105,10 +111,7 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Company Name',
                   hintText: 'Enter Company Name',
-                  prefixIcon: Icon(
-                    Icons.business,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.business, color: Color.fromARGB(255, 221, 178, 49)),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -119,11 +122,20 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                     value == null || value.isEmpty ? 'Please enter a valid email address' : null,
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
-                  hintText: 'Example@gmail.com',
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  hintText: 'example@gmail.com',
+                  prefixIcon: Icon(Icons.email, color: Color.fromARGB(255, 221, 178, 49)),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _confirmEmailController,
+                validator: (value) =>
+                    value != _emailController.text ? 'Emails do not match' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Email',
+                  hintText: 'Re-enter Email',
+                  prefixIcon: Icon(Icons.email_outlined, color: Color.fromARGB(255, 221, 178, 49)),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -136,10 +148,20 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   hintText: 'Enter Password',
-                  prefixIcon: Icon(
-                    Icons.lock,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 221, 178, 49)),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                validator: (value) =>
+                    value != _passwordController.text ? 'Passwords do not match' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
+                  hintText: 'Re-enter Password',
+                  prefixIcon: Icon(Icons.lock_outline, color: Color.fromARGB(255, 221, 178, 49)),
                   border: OutlineInputBorder(),
                 ),
               ),

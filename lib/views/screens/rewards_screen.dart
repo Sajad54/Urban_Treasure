@@ -104,7 +104,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Rewards"),
+        automaticallyImplyLeading: false,
+        title: const Text("Saved Coupons"),
         backgroundColor: const Color.fromARGB(255, 221, 178, 49),
       ),
       body: _favoritedCoupons.isEmpty
@@ -164,11 +165,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
-            label: 'Vendors',
+            label: 'Local Treasures',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard),
-            label: 'Rewards',
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
           ),
         ],
       ),

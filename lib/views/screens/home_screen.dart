@@ -167,11 +167,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
-            label: 'Map',
+            label: 'Local Treasures',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard),
-            label: 'Coupons',
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
           ),
         ],
         selectedItemColor: Colors.white,

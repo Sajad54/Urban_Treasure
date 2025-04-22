@@ -14,14 +14,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _confirmEmailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
+    _confirmEmailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -58,8 +62,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Registration Successful")),
               );
-
-              // Navigate before doing any more setState
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -98,11 +100,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         padding: const EdgeInsets.only(bottom: 60, left: 14, right: 14),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: ListView(
+            shrinkWrap: true,
             children: [
+              const SizedBox(height: 60),
               const Text(
                 'Register Account',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -118,10 +122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Username',
                   hintText: 'Enter Username',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.person,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.person, color: Color.fromARGB(255, 221, 178, 49)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -133,10 +134,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Email Address',
                   hintText: 'example@email.com',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.email, color: Color.fromARGB(255, 221, 178, 49)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _confirmEmailController,
+                validator: (value) =>
+                    value != _emailController.text ? 'Emails do not match' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Email',
+                  hintText: 'Re-enter Email',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email_outlined, color: Color.fromARGB(255, 221, 178, 49)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -149,10 +159,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Password',
                   hintText: 'Enter Password',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.lock,
-                    color: Color.fromARGB(255, 221, 178, 49),
-                  ),
+                  prefixIcon: Icon(Icons.lock, color: Color.fromARGB(255, 221, 178, 49)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                validator: (value) =>
+                    value != _passwordController.text ? 'Passwords do not match' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
+                  hintText: 'Re-enter Password',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline, color: Color.fromARGB(255, 221, 178, 49)),
                 ),
               ),
               const SizedBox(height: 20),
