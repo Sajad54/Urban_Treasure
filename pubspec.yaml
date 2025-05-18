@@ -21,8 +21,6 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_dotenv: ^5.2.1
 
-
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -31,4 +29,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets: 
-  - .env
+    - .env
+
+platforms:
+  linux:
+    default_package: none

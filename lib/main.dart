@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // NEW
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:urban_treasure/views/screens/auth/splash_page.dart';
 import 'package:urban_treasure/models/themes_notifier.dart';
 
