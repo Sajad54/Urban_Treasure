@@ -45,8 +45,8 @@ UrbanTreasure/
 
 For questions, suggestions, or collaborations, please reach out to the project maintainer:
 
-- **Name**: Sajad
-- **Email**: [sajad@example.com](mailto:sajad@example.com)
+- **Name**: Sajad Babazadeh
+- **Email**: [sajadba@gmail.com](mailto:sajadba@gmail.com)
 - **GitHub**: [@Sajad54](https://github.com/Sajad54)
 
 ---
