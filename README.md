@@ -26,7 +26,9 @@ UrbanTreasure is a mobile application designed to:
 
 ## Demo Video
 
-<video src="demo/Demo.mp4" controls width="700"></video>
+
+https://github.com/user-attachments/assets/e8740d45-813f-4dbd-897b-cf337df0bcce
+
 
 ##  Project Structure
 
