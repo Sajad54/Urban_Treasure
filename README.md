@@ -7,7 +7,7 @@ UrbanTreasure is an initiative aimed at bridging the gap between local mom-and-p
 
 ---
 
-## 🚀 Project Overview
+##  Project Overview
 
 UrbanTreasure is a mobile application designed to:
 
@@ -17,7 +17,7 @@ UrbanTreasure is a mobile application designed to:
 
 ---
 
-## 🎯 Key Features
+##  Key Features
 
 - **Business Profiles**: Allow local shops to create and manage their digital storefronts within the app.
 - **Promotional Campaigns**: Enable businesses to launch targeted promotions and discounts to attract customers.
@@ -25,7 +25,7 @@ UrbanTreasure is a mobile application designed to:
 - **Community Events**: Highlight local events and collaborations to foster a sense of community and shared growth.
 
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 UrbanTreasure/
@@ -41,12 +41,12 @@ UrbanTreasure/
 └── README.md               # Project documentation
 ```
 
-## 📬 Contact
+##  Contact
 
 For questions, suggestions, or collaborations, please reach out to the project maintainer:
 
-- **Name**: Sajad
-- **Email**: [sajad@example.com](mailto:sajad@example.com)
+- **Name**: Sajad Babazadeh
+- **Email**: [sajadba@gmail.com](mailto:sajadba@gmail.com)
 - **GitHub**: [@Sajad54](https://github.com/Sajad54)
 
 ---
