@@ -24,6 +24,9 @@ UrbanTreasure is a mobile application designed to:
 - **Customer Rewards**: Introduce a points-based system where customers earn rewards for frequent purchases and engagement.
 - **Community Events**: Highlight local events and collaborations to foster a sense of community and shared growth.
 
+## Demo Video
+
+<video src="demo/Demo.mp4"</video>
 
 ##  Project Structure
 
